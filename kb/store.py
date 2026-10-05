@@ -14,6 +14,7 @@ kb.zip on the repo's "kb-data" branch. The cloud app downloads it (sync_from_git
 every 10 minutes. KB_SOURCE=local|github overrides the automatic choice.
 """
 
+import hashlib
 import json
 import os
 import shutil
@@ -73,10 +74,11 @@ def sync_from_github(every_seconds=600):
     except Exception as e:
         print(f"kb sync failed: {e}")
         return False
-    target = DATA_DIR / "github" / etag[:16]
+    version = hashlib.sha1(etag.encode()).hexdigest()[:12]   # ETags can look like W/"abc" - not a folder name
+    target = DATA_DIR / "github" / version
     shutil.rmtree(target, ignore_errors=True)
     target.mkdir(parents=True)
-    zip_path = target.parent / f"{etag[:16]}.zip"
+    zip_path = target.parent / f"{version}.zip"
     zip_path.write_bytes(r.content)
     with zipfile.ZipFile(zip_path) as z:
         z.extractall(target)
