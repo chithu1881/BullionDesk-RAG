@@ -26,6 +26,8 @@ EXAMPLES = [
     "What happened to platinum on 2 Oct?",
 ]
 
+store.sync_from_github()          # cloud only: pick up a newer kb.zip (checked at most every 10 min)
+
 # ---- sidebar ------------------------------------------------------------------
 with st.sidebar:
     st.header("🪙 Bullion Desk")
@@ -39,7 +41,11 @@ with st.sidebar:
     use_llm = st.toggle("Write with local LLM", value=False, disabled=not llm.available(),
                         help="Open-source model via Ollama on this PC - no API key. Slower on CPU (1-4 min).")
     st.caption("LLM: " + llm.describe())
-    if st.button("▶ Run the 3 agents now", use_container_width=True):
+    if store.source() == "github":
+        st.caption("☁️ Data is collected by GitHub Actions at 10:15 and 17:30 IST "
+                   f"([runs](https://github.com/chithu1881/BullionDesk-RAG/actions)). "
+                   f"Downloaded: {store._active['updated'] or 'not yet'}")
+    elif st.button("▶ Run the 3 agents now", use_container_width=True):
         from agents.orchestrator import run_once
         with st.spinner("Gold, silver and platinum agents are collecting… (~1 min)"):
             result = run_once()

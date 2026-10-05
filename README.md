@@ -86,12 +86,28 @@ Keep collecting every day using either of these:
 Optional written answers: install [Ollama](https://ollama.com), run `ollama pull mistral`, then switch on
 **Write with local LLM** in the app sidebar. It is slow on a CPU (about 1–4 minutes per answer).
 
+## Cloud deployment (Streamlit Community Cloud)
+
+The cloud disk is temporary, so **GitHub stores the knowledge base**:
+
+1. `.github/workflows/collect.yml` runs the 3 agents on GitHub Actions at 10:15 and 17:30 IST (or on demand
+   via **Actions → Collect metal rates → Run workflow**).
+2. Each run unpacks `kb.zip` from the `kb-data` branch, collects, runs the smoke test and force-pushes the new
+   `kb.zip` (about 2 MB, a single commit, so the repo doesn't grow).
+3. On Streamlit Cloud, `kb/store.py` detects the cloud environment, downloads `kb.zip` and checks for a newer one every 10 minutes.
+
+No secrets are needed: GitHub's built-in token saves the data, and the repo is public so the app can download
+it. The local-LLM toggle is off on the cloud because there's no Ollama there, so answers are extractive.
+`venv\Scripts\python -m scripts.kb_sync pull` copies the cloud data to your PC.
+
 ## Project layout
 
 ```
 agents/      sources.py (URLs) · scrapers.py (3 site parsers) · metal_agent.py · orchestrator.py (LangGraph + scheduler)
 processing/  cleaner.py · tagger.py
 kb/          store.py (SQLite + ChromaDB)
+scripts/     kb_sync.py (kb.zip pack / unpack / pull)
+.github/     workflows/collect.yml (scheduled agents on GitHub Actions)
 rag/         engine.py (understand → SQL → vector search → answer) · llm.py (local Ollama, no key)
 app/         streamlit_app.py
 eval/        smoke_test.py

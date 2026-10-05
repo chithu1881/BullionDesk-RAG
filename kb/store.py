@@ -7,18 +7,27 @@ The shared knowledge base. Two stores, one folder (data/):
                              per metal per day, each with date + metal + tag metadata for filtering.
 
 Embeddings: Chroma's built-in all-MiniLM-L6-v2 (open-source, runs locally on CPU, no API key).
+
+On Streamlit Community Cloud the disk is temporary, so GitHub stores the knowledge base instead:
+a GitHub Actions job (.github/workflows/collect.yml) runs the agents twice a day and saves data/ as
+kb.zip on the repo's "kb-data" branch. The cloud app downloads it (sync_from_github) and re-checks
+every 10 minutes. KB_SOURCE=local|github overrides the automatic choice.
 """
 
 import json
+import os
+import shutil
 import sqlite3
+import time
+import zipfile
 from contextlib import closing
 from pathlib import Path
 
 import chromadb
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-DB_PATH = DATA_DIR / "metals.db"
-CHROMA_PATH = DATA_DIR / "chroma"
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = PROJECT_DIR / "data"
+KB_URL = os.getenv("KB_URL", "https://raw.githubusercontent.com/chithu1881/BullionDesk-RAG/kb-data/kb.zip")
 METALS = ("gold", "silver", "platinum")
 MAIN_PURITY = {"gold": "22K", "silver": "999", "platinum": "999"}   # what "the gold price" means in India
 CHUNK_CHARS, CHUNK_OVERLAP = 900, 150
@@ -34,22 +43,68 @@ CREATE TABLE IF NOT EXISTS articles (
 CREATE TABLE IF NOT EXISTS runs (run_id TEXT PRIMARY KEY, started TEXT, report TEXT);
 """
 
+# The folder in use. Locally always data/; on the cloud a fresh folder per downloaded kb.zip version,
+# so an open Chroma client never sees its files replaced underneath it.
+_active = {"dir": DATA_DIR, "etag": None, "checked": 0.0, "updated": None}
+_collection = None
+
+
+def source():
+    wanted = os.getenv("KB_SOURCE", "").lower()
+    if wanted in ("local", "github"):
+        return wanted
+    return "github" if Path("/mount/src").exists() else "local"      # /mount/src = Streamlit Cloud
+
+
+def sync_from_github(every_seconds=600):
+    """Cloud only: download kb.zip if GitHub has a newer one. Returns True if the data changed."""
+    global _collection
+    if source() != "github" or time.time() - _active["checked"] < every_seconds:
+        return False
+    _active["checked"] = time.time()
+    import requests
+    try:
+        head = requests.head(KB_URL, timeout=20, allow_redirects=True)
+        etag = head.headers.get("ETag", "").strip('"') or str(int(time.time()))
+        if head.status_code != 200 or etag == _active["etag"]:
+            return False
+        r = requests.get(KB_URL, timeout=300)
+        r.raise_for_status()
+    except Exception as e:
+        print(f"kb sync failed: {e}")
+        return False
+    target = DATA_DIR / "github" / etag[:16]
+    shutil.rmtree(target, ignore_errors=True)
+    target.mkdir(parents=True)
+    zip_path = target.parent / f"{etag[:16]}.zip"
+    zip_path.write_bytes(r.content)
+    with zipfile.ZipFile(zip_path) as z:
+        z.extractall(target)
+    zip_path.unlink()
+    _active.update(dir=target, etag=etag, updated=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()))
+    _collection = None
+    return True
+
+
+def active_dir():
+    if source() == "github" and _active["etag"] is None:
+        sync_from_github(every_seconds=0)          # first use on the cloud: download before opening
+    return _active["dir"]
+
 
 def db():
-    DATA_DIR.mkdir(exist_ok=True)
-    con = sqlite3.connect(DB_PATH)
+    folder = active_dir()
+    folder.mkdir(parents=True, exist_ok=True)
+    con = sqlite3.connect(folder / "metals.db")
     con.row_factory = sqlite3.Row
     con.executescript(SCHEMA)
     return con
 
 
-_collection = None
-
-
 def collection():
     global _collection
     if _collection is None:
-        client = chromadb.PersistentClient(path=str(CHROMA_PATH))
+        client = chromadb.PersistentClient(path=str(active_dir() / "chroma"))
         _collection = client.get_or_create_collection("knowledge", metadata={"hnsw:space": "cosine"})
     return _collection
 

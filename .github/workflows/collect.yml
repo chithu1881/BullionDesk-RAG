@@ -1,0 +1,72 @@
+# Scheduled collection for the cloud app. GitHub itself stores the knowledge base: each run downloads
+# kb.zip from the "kb-data" branch, runs the 3 agents, and saves it back. The Streamlit app downloads that
+# file. No database account and no API keys - only GitHub's built-in token.
+name: Collect metal rates
+
+on:
+  schedule:
+    # times in UTC = 10:15 and 17:30 India time (jewellers publish around 9:30-10:00 IST)
+    - cron: "45 4 * * *"
+    - cron: "0 12 * * *"
+  workflow_dispatch: {}              # "Run workflow" button for a manual run
+
+permissions:
+  contents: write                    # to save kb.zip on the kb-data branch
+
+concurrency:
+  group: collect-rates               # never two runs writing at the same time
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      KB_SOURCE: local
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/chroma
+          key: chroma-all-MiniLM-L6-v2
+
+      - name: Load the current knowledge base
+        id: load
+        run: |
+          if git fetch --depth=1 origin kb-data; then
+            git show origin/kb-data:kb.zip > kb.zip
+            python -m scripts.kb_sync unpack kb.zip
+          else
+            echo "No kb-data branch yet - starting with an empty knowledge base"
+          fi
+
+      - name: Run the 3 agents (collect, clean, tag, store)
+        run: python -m agents.orchestrator
+
+      - name: Smoke test
+        continue-on-error: true      # report problems in the log, but still save what was collected
+        run: python -m eval.smoke_test
+
+      - name: Save the knowledge base to the kb-data branch
+        # keep what was stored even if a step failed - but never save if loading failed,
+        # because that would replace the real database with an empty one
+        if: always() && steps.load.outcome == 'success'
+        run: |
+          python -m scripts.kb_sync pack kb.zip
+          mkdir publish && mv kb.zip publish/ && cd publish
+          git init -q -b kb-data
+          git add kb.zip
+          git -c user.name="rates-collector" -c user.email="actions@users.noreply.github.com" \
+            commit -q -m "Knowledge base $(date -u +'%Y-%m-%d %H:%M') UTC"
+          # one commit that replaces the previous one, so the repository does not grow
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" kb-data
