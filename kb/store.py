@@ -71,18 +71,18 @@ def sync_from_github(every_seconds=600):
             return False
         r = requests.get(KB_URL, timeout=300)
         r.raise_for_status()
-    except Exception as e:
+        version = hashlib.sha1(etag.encode()).hexdigest()[:12]   # ETags can look like W/"abc" - not a folder name
+        target = DATA_DIR / "github" / version
+        shutil.rmtree(target, ignore_errors=True)
+        target.mkdir(parents=True)
+        zip_path = target.parent / f"{version}.zip"
+        zip_path.write_bytes(r.content)
+        with zipfile.ZipFile(zip_path) as z:
+            z.extractall(target)
+        zip_path.unlink()
+    except Exception as e:                         # never break the app - keep serving the data we have
         print(f"kb sync failed: {e}")
         return False
-    version = hashlib.sha1(etag.encode()).hexdigest()[:12]   # ETags can look like W/"abc" - not a folder name
-    target = DATA_DIR / "github" / version
-    shutil.rmtree(target, ignore_errors=True)
-    target.mkdir(parents=True)
-    zip_path = target.parent / f"{version}.zip"
-    zip_path.write_bytes(r.content)
-    with zipfile.ZipFile(zip_path) as z:
-        z.extractall(target)
-    zip_path.unlink()
     _active.update(dir=target, etag=etag, updated=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()))
     _collection = None
     return True
@@ -90,7 +90,8 @@ def sync_from_github(every_seconds=600):
 
 def active_dir():
     if source() == "github" and _active["etag"] is None:
-        sync_from_github(every_seconds=0)          # first use on the cloud: download before opening
+        sync_from_github(every_seconds=60)         # first use on the cloud: download before opening
+                                                   # (if that fails, retry at most once a minute)
     return _active["dir"]
 
 
