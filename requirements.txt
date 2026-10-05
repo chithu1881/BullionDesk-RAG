@@ -1,0 +1,12 @@
+# No API keys needed anywhere. Optional local LLM: install Ollama (https://ollama.com) and run "ollama pull mistral".
+langgraph
+chromadb            # vector DB + built-in all-MiniLM-L6-v2 ONNX embeddings (downloaded once, ~80 MB)
+streamlit
+altair
+pandas
+requests
+beautifulsoup4
+feedparser
+trafilatura
+python-dotenv
+apscheduler

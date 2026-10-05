@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 700" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker>
+  </defs>
+  <rect width="980" height="700" fill="#ffffff"/>
+  <text x="490" y="32" text-anchor="middle" font-size="20" font-weight="600" fill="#222">Bullion Desk – multi-agent RAG for gold, silver &amp; platinum</text>
+
+  <!-- sources -->
+  <text x="40" y="70" font-weight="600" fill="#666">1 · SOURCES</text>
+  <rect x="40" y="80" width="200" height="40" rx="6" fill="#eef3fb" stroke="#7a9cc6"/><text x="140" y="105" text-anchor="middle">goodreturns.in (+10-day history)</text>
+  <rect x="40" y="128" width="200" height="40" rx="6" fill="#eef3fb" stroke="#7a9cc6"/><text x="140" y="153" text-anchor="middle">moneycontrol.com (rates)</text>
+  <rect x="40" y="176" width="200" height="40" rx="6" fill="#eef3fb" stroke="#7a9cc6"/><text x="140" y="201" text-anchor="middle">Thangamayil Jewellery (retail)</text>
+  <rect x="40" y="224" width="200" height="52" rx="6" fill="#eef3fb" stroke="#7a9cc6"/><text x="140" y="245" text-anchor="middle">News RSS: ET, BusinessLine,</text><text x="140" y="263" text-anchor="middle">Business Std, Mint, Google News</text>
+
+  <!-- scheduler -->
+  <rect x="300" y="60" width="380" height="36" rx="18" fill="#fff6e5" stroke="#d9a441"/>
+  <text x="490" y="83" text-anchor="middle">⏰ APScheduler (10:15 &amp; 17:30 IST) · or Windows Task Scheduler / cron</text>
+  <line x1="490" y1="96" x2="490" y2="112" stroke="#555" marker-end="url(#a)"/>
+
+  <!-- LangGraph box -->
+  <rect x="290" y="114" width="400" height="330" rx="10" fill="#fafafa" stroke="#999" stroke-dasharray="5 4"/>
+  <text x="300" y="132" font-weight="600" fill="#666">2 · LANGGRAPH ORCHESTRATOR (agents/orchestrator.py)</text>
+  <rect x="305" y="145" width="115" height="50" rx="8" fill="#fdf1c7" stroke="#c9a227"/><text x="362" y="167" text-anchor="middle" font-weight="600">Gold agent</text><text x="362" y="184" text-anchor="middle" font-size="11">3 sites + feeds</text>
+  <rect x="432" y="145" width="115" height="50" rx="8" fill="#eceff1" stroke="#90a4ae"/><text x="489" y="167" text-anchor="middle" font-weight="600">Silver agent</text><text x="489" y="184" text-anchor="middle" font-size="11">3 sites + feeds</text>
+  <rect x="559" y="145" width="115" height="50" rx="8" fill="#e8eaf6" stroke="#7986cb"/><text x="616" y="167" text-anchor="middle" font-weight="600">Platinum agent</text><text x="616" y="184" text-anchor="middle" font-size="11">3 sites + feeds</text>
+  <line x1="240" y1="150" x2="303" y2="168" stroke="#555" marker-end="url(#a)"/>
+
+  <line x1="362" y1="195" x2="470" y2="222" stroke="#555" marker-end="url(#a)"/>
+  <line x1="489" y1="195" x2="489" y2="220" stroke="#555" marker-end="url(#a)"/>
+  <line x1="616" y1="195" x2="508" y2="222" stroke="#555" marker-end="url(#a)"/>
+  <rect x="370" y="223" width="240" height="44" rx="8" fill="#e8f5e9" stroke="#66bb6a"/><text x="490" y="241" text-anchor="middle" font-weight="600">Clean</text><text x="490" y="257" text-anchor="middle" font-size="11">price sanity · cross-source flag · dedupe · full text</text>
+  <line x1="490" y1="267" x2="490" y2="283" stroke="#555" marker-end="url(#a)"/>
+  <rect x="370" y="285" width="240" height="44" rx="8" fill="#e8f5e9" stroke="#66bb6a"/><text x="490" y="303" text-anchor="middle" font-weight="600">Tag</text><text x="490" y="319" text-anchor="middle" font-size="11">metals · direction · drivers · markets · type</text>
+  <line x1="490" y1="329" x2="490" y2="345" stroke="#555" marker-end="url(#a)"/>
+  <rect x="370" y="347" width="240" height="36" rx="8" fill="#e8f5e9" stroke="#66bb6a"/><text x="490" y="370" text-anchor="middle" font-weight="600">Store → shared knowledge base</text>
+  <line x1="490" y1="383" x2="490" y2="399" stroke="#555" marker-end="url(#a)"/>
+  <rect x="370" y="401" width="240" height="32" rx="8" fill="#e8f5e9" stroke="#66bb6a"/><text x="490" y="422" text-anchor="middle" font-weight="600">Report (run log)</text>
+
+  <!-- KB -->
+  <text x="740" y="132" font-weight="600" fill="#666">3 · KNOWLEDGE BASE (data/)</text>
+  <rect x="740" y="145" width="200" height="88" rx="8" fill="#fce4ec" stroke="#e57399"/>
+  <text x="840" y="167" text-anchor="middle" font-weight="600">SQLite  metals.db</text>
+  <text x="840" y="186" text-anchor="middle" font-size="11">rates (metal, purity, date,</text>
+  <text x="840" y="201" text-anchor="middle" font-size="11">source, ₹/gram, flag)</text>
+  <text x="840" y="218" text-anchor="middle" font-size="11">articles · runs</text>
+  <rect x="740" y="250" width="200" height="104" rx="8" fill="#fce4ec" stroke="#e57399"/>
+  <text x="840" y="272" text-anchor="middle" font-weight="600">ChromaDB  "knowledge"</text>
+  <text x="840" y="291" text-anchor="middle" font-size="11">news chunks + daily rate docs</text>
+  <text x="840" y="306" text-anchor="middle" font-size="11">embeddings: all-MiniLM-L6-v2</text>
+  <text x="840" y="321" text-anchor="middle" font-size="11">metadata: date_int, metal_*,</text>
+  <text x="840" y="336" text-anchor="middle" font-size="11">direction, drivers, url</text>
+  <line x1="610" y1="362" x2="738" y2="200" stroke="#555" marker-end="url(#a)"/>
+  <line x1="610" y1="366" x2="738" y2="305" stroke="#555" marker-end="url(#a)"/>
+
+  <!-- RAG -->
+  <text x="40" y="480" font-weight="600" fill="#666">4 · RAG ENGINE (rag/engine.py)</text>
+  <rect x="40" y="492" width="170" height="64" rx="8" fill="#e0f2f1" stroke="#4db6ac"/><text x="125" y="514" text-anchor="middle" font-weight="600">① Understand</text><text x="125" y="531" text-anchor="middle" font-size="11">metals · purity ·</text><text x="125" y="545" text-anchor="middle" font-size="11">date window (IST)</text>
+  <line x1="210" y1="524" x2="238" y2="524" stroke="#555" marker-end="url(#a)"/>
+  <rect x="240" y="492" width="170" height="64" rx="8" fill="#e0f2f1" stroke="#4db6ac"/><text x="325" y="514" text-anchor="middle" font-weight="600">② Numbers (SQL)</text><text x="325" y="531" text-anchor="middle" font-size="11">high · low · change</text><text x="325" y="545" text-anchor="middle" font-size="11">per source, per date</text>
+  <line x1="410" y1="524" x2="438" y2="524" stroke="#555" marker-end="url(#a)"/>
+  <rect x="440" y="492" width="170" height="64" rx="8" fill="#e0f2f1" stroke="#4db6ac"/><text x="525" y="514" text-anchor="middle" font-weight="600">③ News (vector)</text><text x="525" y="531" text-anchor="middle" font-size="11">Chroma search filtered</text><text x="525" y="545" text-anchor="middle" font-size="11">by window + metal</text>
+  <line x1="610" y1="524" x2="638" y2="524" stroke="#555" marker-end="url(#a)"/>
+  <rect x="640" y="492" width="170" height="64" rx="8" fill="#e0f2f1" stroke="#4db6ac"/><text x="725" y="514" text-anchor="middle" font-weight="600">④ Generate</text><text x="725" y="531" text-anchor="middle" font-size="11">local Mistral (Ollama), cites [n]</text><text x="725" y="545" text-anchor="middle" font-size="11">or instant extractive</text>
+  <path d="M740 215 C 650 470, 380 440, 325 490" fill="none" stroke="#555" stroke-dasharray="4 3" marker-end="url(#a)"/>
+  <path d="M760 354 C 720 450, 560 440, 525 490" fill="none" stroke="#555" stroke-dasharray="4 3" marker-end="url(#a)"/>
+
+  <!-- UI -->
+  <text x="40" y="600" font-weight="600" fill="#666">5 · INTERFACE</text>
+  <rect x="240" y="590" width="570" height="64" rx="10" fill="#ede7f6" stroke="#9575cd"/>
+  <text x="525" y="614" text-anchor="middle" font-weight="600">Streamlit app (app/streamlit_app.py)</text>
+  <text x="525" y="634" text-anchor="middle" font-size="12">💬 Ask (chat + sources) · 📈 Rates (cards + 30-day chart) · 📰 News KB (tag filters) · ⚙️ Pipeline runs</text>
+  <line x1="725" y1="556" x2="700" y2="588" stroke="#555" marker-end="url(#a)"/>
+  <line x1="360" y1="588" x2="125" y2="558" stroke="#555" marker-end="url(#a)"/>
+  <text x="200" y="584" font-size="11" fill="#555">user question</text>
+  <text x="720" y="578" font-size="11" fill="#555">answer + sources</text>
+</svg>
